@@ -3,9 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kasa fiskalna</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Lokalna kasa fiskalna</title>
 
   <style>
     * {
@@ -30,7 +28,7 @@
     }
 
     main {
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 25px auto;
       padding: 0 15px;
       display: grid;
@@ -42,7 +40,7 @@
       background: white;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08 );
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     h2 {
@@ -50,8 +48,8 @@
     }
 
     input,
-    button,
-    select {
+    select,
+    button {
       width: 100%;
       padding: 11px;
       margin: 6px 0;
@@ -71,42 +69,57 @@
       background: #1d4ed8;
     }
 
+    button.secondary {
+      background: #64748b;
+    }
+
+    button.secondary:hover {
+      background: #475569;
+    }
+
     button.danger {
       background: #dc2626;
-      width: auto;
-      padding: 6px 9px;
-      margin: 0 0 0 8px;
     }
 
     button.danger:hover {
       background: #b91c1c;
     }
 
+    button.small {
+      width: auto;
+      padding: 7px 10px;
+      margin: 2px;
+      font-size: 13px;
+    }
+
     .product {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      padding: 12px 0;
       border-bottom: 1px solid #e2e8f0;
-      padding: 10px 0;
     }
 
     .product:last-child {
       border-bottom: none;
     }
 
-    .product button {
-      width: auto;
-      margin: 0;
-      white-space: nowrap;
+    .product-info {
+      flex: 1;
+    }
+
+    .product-actions {
+      min-width: 130px;
+      text-align: right;
     }
 
     .cart-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
       gap: 10px;
-      padding: 10px 0;
+      align-items: center;
+      padding: 12px 0;
       border-bottom: 1px solid #e2e8f0;
     }
 
@@ -114,8 +127,21 @@
       border-bottom: none;
     }
 
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .quantity-controls button {
+      width: 30px;
+      height: 30px;
+      padding: 0;
+      margin: 0;
+    }
+
     .total {
-      font-size: 24px;
+      font-size: 25px;
       font-weight: bold;
       margin-top: 20px;
       text-align: right;
@@ -130,28 +156,79 @@
       color: #075985;
     }
 
-    .error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
     .success {
       background: #dcfce7;
       color: #166534;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
     }
 
     .empty {
       color: #64748b;
     }
 
-    @media (max-width: 750px) {
+    .receipt {
+      border: 1px dashed #94a3b8;
+      padding: 15px;
+      margin-top: 20px;
+      background: #fff;
+      font-family: monospace;
+    }
+
+    .receipt h3 {
+      text-align: center;
+      margin-top: 0;
+    }
+
+    .receipt-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 800px) {
       main {
         grid-template-columns: 1fr;
       }
 
-      .product,
       .cart-row {
+        grid-template-columns: 1fr;
+        gap: 5px;
+      }
+
+      .product {
         align-items: flex-start;
+      }
+
+      .product-actions {
+        min-width: 100px;
+      }
+    }
+
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+
+      #receipt,
+      #receipt * {
+        visibility: visible;
+      }
+
+      #receipt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 80mm;
+        border: none;
       }
     }
   </style>
@@ -159,48 +236,19 @@
 
 <body>
   <header>
-    <h1>Kasa fiskalna</h1>
-    <div id="userInfo">Niezalogowany</div>
+    <h1>Lokalna kasa fiskalna</h1>
+    <div>Tryb lokalny — dane są zapisane tylko w tej przeglądarce</div>
   </header>
 
   <main>
-    <!-- Logowanie -->
-    <section>
-      <h2>Logowanie</h2>
-
-      <input
-        id="email"
-        type="email"
-        placeholder="E-mail"
-      >
-
-      <input
-        id="password"
-        type="password"
-        placeholder="Hasło"
-      >
-
-      <button id="loginButton">Zaloguj</button>
-      <button id="registerButton">Utwórz konto</button>
-      <button id="logoutButton" style="display: none; background: #64748b;">
-        Wyloguj
-      </button>
-
-      <div id="authMessage" class="message"></div>
-    </section>
-
     <!-- Dodawanie produktu -->
     <section>
-      <h2>Dodaj produkt</h2>
+      <h2>Dodaj lub ustaw produkt</h2>
 
       <input
         id="productName"
-        placeholder="Nazwa produktu"
-      >
-
-      <input
-        id="productBarcode"
-        placeholder="Kod kreskowy"
+        type="text"
+        placeholder="Nazwa produktu na paragonie"
       >
 
       <input
@@ -212,6 +260,12 @@
       >
 
       <input
+        id="productBarcode"
+        type="text"
+        placeholder="Kod kreskowy — opcjonalnie"
+      >
+
+      <input
         id="productVat"
         type="number"
         min="0"
@@ -219,94 +273,168 @@
         placeholder="VAT %"
       >
 
-      <button id="addProductButton">Dodaj produkt</button>
+      <button id="saveProductButton">
+        Dodaj produkt
+      </button>
+
+      <button
+        id="cancelEditButton"
+        class="secondary hidden">
+        Anuluj edycję
+      </button>
+
+      <div id="productMessage" class="message"></div>
     </section>
 
-    <!-- Lista produktów -->
+    <!-- Produkty -->
     <section>
       <h2>Produkty</h2>
 
       <input
-        id="search"
-        placeholder="Szukaj produktu lub kodu..."
+        id="searchInput"
+        type="text"
+        placeholder="Szukaj po nazwie lub kodzie..."
       >
 
-      <div id="products">
-        <p class="empty">Zaloguj się, aby zobaczyć produkty.</p>
+      <div id="productsList">
+        <p class="empty">Nie dodano jeszcze produktów.</p>
       </div>
     </section>
 
-    <!-- Koszyk i sprzedaż -->
+    <!-- Paragon -->
     <section>
-      <h2>Paragon</h2>
+      <h2>Aktualny paragon</h2>
 
-      <div id="cart">
+      <div id="cartList">
         <p class="empty">Paragon jest pusty.</p>
       </div>
 
       <div class="total">
         Razem:
-        <span id="total">0.00</span> zł
+        <span id="totalValue">0.00</span> zł
       </div>
 
       <select id="paymentMethod">
-        <option value="cash">Gotówka</option>
-        <option value="card">Karta</option>
-        <option value="transfer">Przelew</option>
+        <option value="Gotówka">Gotówka</option>
+        <option value="Karta">Karta</option>
+        <option value="Przelew">Przelew</option>
       </select>
 
-      <button id="completeSaleButton">
+      <button id="finishSaleButton">
         Zakończ sprzedaż
       </button>
 
+      <button
+        id="clearCartButton"
+        class="danger">
+        Wyczyść paragon
+      </button>
+
       <div id="saleMessage" class="message"></div>
+    </section>
+
+    <!-- Ostatni paragon -->
+    <section>
+      <h2>Ostatni paragon</h2>
+
+      <div id="receipt" class="receipt hidden"></div>
+
+      <button
+        id="printReceiptButton"
+        class="secondary hidden">
+        Drukuj paragon
+      </button>
     </section>
   </main>
 
   <script>
     /*
-      KONFIGURACJA SUPABASE
+      WERSJA LOKALNA
 
-      Adres projektu oraz klucz publiczny.
-      Nie wstawiaj tutaj klucza service_role.
+      Nie ma tu połączenia z Supabase ani żadnym backendem.
+      Produkty są przechowywane w localStorage przeglądarki.
     */
 
-    const SUPABASE_URL =
-      "https://kbmckegbhtnjggvvxnbq.supabase.co";
+    const PRODUCTS_KEY = "lokalna_kasa_produkty";
+    const SALES_KEY = "lokalna_kasa_sprzedaz";
 
-    const SUPABASE_ANON_KEY =
-      "sb_publishable_g3Ip7s1jBzSenb_UVG2P9A_kY8h0kCY";
-
-    const supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY
-     );
-
-    let allProducts = [];
+    let products = loadProducts();
     let cart = [];
+    let editingProductId = null;
+    let lastReceipt = null;
 
-    const userInfo = document.getElementById("userInfo");
-    const authMessage = document.getElementById("authMessage");
-    const saleMessage = document.getElementById("saleMessage");
-    const productsContainer = document.getElementById("products");
-    const cartContainer = document.getElementById("cart");
-    const totalElement = document.getElementById("total");
+    const productNameInput =
+      document.getElementById("productName");
 
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
+    const productPriceInput =
+      document.getElementById("productPrice");
 
-    const productNameInput = document.getElementById("productName");
-    const productBarcodeInput = document.getElementById("productBarcode");
-    const productPriceInput = document.getElementById("productPrice");
-    const productVatInput = document.getElementById("productVat");
-    const searchInput = document.getElementById("search");
+    const productBarcodeInput =
+      document.getElementById("productBarcode");
 
-    const loginButton = document.getElementById("loginButton");
-    const registerButton = document.getElementById("registerButton");
-    const logoutButton = document.getElementById("logoutButton");
-    const addProductButton = document.getElementById("addProductButton");
-    const completeSaleButton = document.getElementById("completeSaleButton");
-    const paymentMethodSelect = document.getElementById("paymentMethod");
+    const productVatInput =
+      document.getElementById("productVat");
+
+    const saveProductButton =
+      document.getElementById("saveProductButton");
+
+    const cancelEditButton =
+      document.getElementById("cancelEditButton");
+
+    const productMessage =
+      document.getElementById("productMessage");
+
+    const searchInput =
+      document.getElementById("searchInput");
+
+    const productsList =
+      document.getElementById("productsList");
+
+    const cartList =
+      document.getElementById("cartList");
+
+    const totalValue =
+      document.getElementById("totalValue");
+
+    const paymentMethod =
+      document.getElementById("paymentMethod");
+
+    const finishSaleButton =
+      document.getElementById("finishSaleButton");
+
+    const clearCartButton =
+      document.getElementById("clearCartButton");
+
+    const saleMessage =
+      document.getElementById("saleMessage");
+
+    const receipt =
+      document.getElementById("receipt");
+
+    const printReceiptButton =
+      document.getElementById("printReceiptButton");
+
+    function createId() {
+      return Date.now().toString() +
+        Math.random().toString(16).slice(2);
+    }
+
+    function loadProducts() {
+      try {
+        return JSON.parse(
+          localStorage.getItem(PRODUCTS_KEY)
+        ) || [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveProducts() {
+      localStorage.setItem(
+        PRODUCTS_KEY,
+        JSON.stringify(products)
+      );
+    }
 
     function showMessage(element, text, type = "") {
       element.textContent = text;
@@ -318,6 +446,10 @@
       element.className = "message";
     }
 
+    function money(value) {
+      return Number(value || 0).toFixed(2);
+    }
+
     function escapeHtml(value) {
       return String(value)
         .replaceAll("&", "&amp;")
@@ -327,144 +459,99 @@
         .replaceAll("'", "&#039;");
     }
 
-    async function register() {
-      clearMessage(authMessage);
+    function renderProducts() {
+      const search = searchInput.value
+        .trim()
+        .toLowerCase();
 
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
+      const filteredProducts = products.filter(product => {
+        const name = product.name.toLowerCase();
+        const barcode = product.barcode.toLowerCase();
 
-      if (!email || !password) {
-        showMessage(
-          authMessage,
-          "Podaj e-mail i hasło.",
-          "error"
+        return (
+          name.includes(search) ||
+          barcode.includes(search)
         );
-        return;
-      }
-
-      if (password.length < 6) {
-        showMessage(
-          authMessage,
-          "Hasło musi mieć co najmniej 6 znaków.",
-          "error"
-        );
-        return;
-      }
-
-      const { error } = await supabaseClient.auth.signUp({
-        email,
-        password
       });
 
-      if (error) {
-        showMessage(authMessage, error.message, "error");
+      productsList.innerHTML = "";
+
+      if (!filteredProducts.length) {
+        productsList.innerHTML =
+          '<p class="empty">Brak produktów.</p>';
         return;
       }
 
-      showMessage(
-        authMessage,
-        "Konto utworzone. Sprawdź skrzynkę e-mail, jeśli wymagana jest aktywacja.",
-        "success"
-      );
+      filteredProducts.forEach(product => {
+        const row = document.createElement("div");
+        row.className = "product";
+
+        row.innerHTML = `
+          <div class="product-info">
+            <strong>${escapeHtml(product.name)}</strong>  
+
+            <span>
+              Cena: ${money(product.price)} zł
+            </span>  
+
+            <small>
+              Kod: ${escapeHtml(product.barcode || "brak")}
+              | VAT: ${product.vat}% 
+            </small>
+          </div>
+
+          <div class="product-actions">
+            <button
+              class="small"
+              data-action="add">
+              Dodaj
+            </button>
+
+            <button
+              class="small secondary"
+              data-action="edit">
+              Edytuj
+            </button>
+
+            <button
+              class="small danger"
+              data-action="delete">
+              Usuń
+            </button>
+          </div>
+        `;
+
+        row.querySelector('[data-action="add"]')
+          .addEventListener("click", () => {
+            addToCart(product.id);
+          });
+
+        row.querySelector('[data-action="edit"]')
+          .addEventListener("click", () => {
+            startEditProduct(product.id);
+          });
+
+        row.querySelector('[data-action="delete"]')
+          .addEventListener("click", () => {
+            deleteProduct(product.id);
+          });
+
+        productsList.appendChild(row);
+      });
     }
 
-    async function login() {
-      clearMessage(authMessage);
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      if (!email || !password) {
-        showMessage(
-          authMessage,
-          "Podaj e-mail i hasło.",
-          "error"
-        );
-        return;
-      }
-
-      const { error } =
-        await supabaseClient.auth.signInWithPassword({
-          email,
-          password
-        });
-
-      if (error) {
-        showMessage(authMessage, error.message, "error");
-        return;
-      }
-
-      showMessage(
-        authMessage,
-        "Zalogowano poprawnie.",
-        "success"
-      );
-
-      await updateUserInterface();
-      await loadProducts();
-    }
-
-    async function logout() {
-      const { error } = await supabaseClient.auth.signOut();
-
-      if (error) {
-        showMessage(authMessage, error.message, "error");
-        return;
-      }
-
-      userInfo.textContent = "Niezalogowany";
-      logoutButton.style.display = "none";
-
-      productsContainer.innerHTML =
-        '<p class="empty">Zaloguj się, aby zobaczyć produkty.</p>';
-
-      cart = [];
-      displayCart();
-
-      showMessage(
-        authMessage,
-        "Wylogowano.",
-        "success"
-      );
-    }
-
-    async function updateUserInterface() {
-      const { data } = await supabaseClient.auth.getUser();
-      const user = data.user;
-
-      if (user) {
-        userInfo.textContent = "Zalogowany: " + user.email;
-        logoutButton.style.display = "block";
-      } else {
-        userInfo.textContent = "Niezalogowany";
-        logoutButton.style.display = "none";
-      }
-    }
-
-    async function addProduct() {
-      clearMessage(authMessage);
-
-      const { data } = await supabaseClient.auth.getUser();
-      const user = data.user;
-
-      if (!user) {
-        showMessage(
-          authMessage,
-          "Najpierw się zaloguj.",
-          "error"
-        );
-        return;
-      }
+    function saveProduct() {
+      clearMessage(productMessage);
 
       const name = productNameInput.value.trim();
-      const barcode = productBarcodeInput.value.trim();
       const price = Number(productPriceInput.value);
-      const vatRate = Number(productVatInput.value);
+      const barcode = productBarcodeInput.value.trim();
+      const vat = Number(productVatInput.value);
 
       if (!name) {
         showMessage(
-          authMessage,
-          "Podaj nazwę produktu.",
+          productMessage,
+          "Wpisz nazwę produktu.",
           "error"
         );
         return;
@@ -472,137 +559,62 @@
 
       if (!Number.isFinite(price) || price < 0) {
         showMessage(
-          authMessage,
-          "Podaj prawidłową cenę.",
+          productMessage,
+          "Wpisz prawidłową cenę.",
           "error"
         );
         return;
       }
 
-      if (!Number.isFinite(vatRate) || vatRate < 0) {
+      if (!Number.isFinite(vat) || vat < 0) {
         showMessage(
-          authMessage,
-          "Podaj prawidłową stawkę VAT.",
+          productMessage,
+          "Wpisz prawidłową stawkę VAT.",
           "error"
         );
         return;
       }
 
-      const { error } = await supabaseClient
-        .from("products")
-        .insert({
-          name: name,
-          barcode: barcode || null,
-          price: price,
-          vat_rate: vatRate
+      if (editingProductId) {
+        const product = products.find(
+          item => item.id === editingProductId
+        );
+
+        if (product) {
+          product.name = name;
+          product.price = price;
+          product.barcode = barcode;
+          product.vat = vat;
+        }
+
+        showMessage(
+          productMessage,
+          "Produkt został zaktualizowany.",
+          "success"
+        );
+      } else {
+        products.push({
+          id: createId(),
+          name,
+          price,
+          barcode,
+          vat
         });
 
-      if (error) {
-        showMessage(authMessage, error.message, "error");
-        return;
-      }
-
-      productNameInput.value = "";
-      productBarcodeInput.value = "";
-      productPriceInput.value = "";
-      productVatInput.value = "23";
-
-      showMessage(
-        authMessage,
-        "Produkt został dodany.",
-        "success"
-      );
-
-      await loadProducts();
-    }
-
-    async function loadProducts() {
-      const { data: userData } =
-        await supabaseClient.auth.getUser();
-
-      if (!userData.user) {
-        return;
-      }
-
-      const { data, error } = await supabaseClient
-        .from("products")
-        .select("*")
-        .eq("active", true)
-        .order("name", { ascending: true });
-
-      if (error) {
-        productsContainer.innerHTML = "";
         showMessage(
-          authMessage,
-          "Nie można pobrać produktów: " + error.message,
-          "error"
+          productMessage,
+          "Produkt został dodany.",
+          "success"
         );
-        return;
       }
 
-      allProducts = data || [];
-      displayProducts(allProducts);
+      saveProducts();
+      clearProductForm();
+      renderProducts();
     }
 
-    function displayProducts(products) {
-      productsContainer.innerHTML = "";
-
-      if (!products.length) {
-        productsContainer.innerHTML =
-          '<p class="empty">Brak produktów.</p>';
-        return;
-      }
-
-      products.forEach(product => {
-        const row = document.createElement("div");
-        row.className = "product";
-
-        const price = Number(product.price || 0).toFixed(2);
-
-        row.innerHTML = `
-          <div>
-            <strong>${escapeHtml(product.name)}</strong>  
-
-            <small>
-              Kod: ${escapeHtml(product.barcode || "brak")}
-            </small>
-          </div>
-
-          <div>
-            <strong>${price} zł</strong>
-            <button
-              type="button"
-              data-product-id="${escapeHtml(product.id)}">
-              Dodaj
-            </button>
-          </div>
-        `;
-
-        const addButton = row.querySelector("button");
-
-        addButton.addEventListener("click", () => {
-          addToCart(product.id);
-        });
-
-        productsContainer.appendChild(row);
-      });
-    }
-
-    function filterProducts() {
-      const search = searchInput.value.trim().toLowerCase();
-
-      const filtered = allProducts.filter(product => {
-        const name = String(product.name || "").toLowerCase();
-        const barcode = String(product.barcode || "").toLowerCase();
-
-        return name.includes(search) || barcode.includes(search);
-      });
-
-      displayProducts(filtered);
-    }
-
-    function addToCart(productId) {
-      const product = allProducts.find(
+    function startEditProduct(productId) {
+      const product = products.find(
         item => item.id === productId
       );
 
@@ -610,122 +622,211 @@
         return;
       }
 
-      const existing = cart.find(
+      editingProductId = productId;
+
+      productNameInput.value = product.name;
+      productPriceInput.value = product.price;
+      productBarcodeInput.value = product.barcode;
+      productVatInput.value = product.vat;
+
+      saveProductButton.textContent =
+        "Zapisz zmiany produktu";
+
+      cancelEditButton.classList.remove("hidden");
+
+      productNameInput.focus();
+
+      showMessage(
+        productMessage,
+        "Edytujesz produkt. Zmień nazwę lub cenę i zapisz.",
+        ""
+      );
+    }
+
+    function clearProductForm() {
+      editingProductId = null;
+
+      productNameInput.value = "";
+      productPriceInput.value = "";
+      productBarcodeInput.value = "";
+      productVatInput.value = "23";
+
+      saveProductButton.textContent =
+        "Dodaj produkt";
+
+      cancelEditButton.classList.add("hidden");
+    }
+
+    function deleteProduct(productId) {
+      const product = products.find(
         item => item.id === productId
       );
 
-      if (existing) {
-        existing.quantity += 1;
+      if (!product) {
+        return;
+      }
+
+      const confirmed = confirm(
+        `Usunąć produkt "${product.name}"?`
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      products = products.filter(
+        item => item.id !== productId
+      );
+
+      saveProducts();
+      renderProducts();
+
+      showMessage(
+        productMessage,
+        "Produkt został usunięty.",
+        "success"
+      );
+    }
+
+    function addToCart(productId) {
+      const product = products.find(
+        item => item.id === productId
+      );
+
+      if (!product) {
+        return;
+      }
+
+      /*
+        Nazwa i cena są kopiowane do koszyka.
+        Dzięki temu paragon zachowuje cenę i nazwę
+        ustawione w chwili dodania produktu.
+      */
+
+      const existingItem = cart.find(
+        item => item.productId === productId
+      );
+
+      if (existingItem) {
+        existingItem.quantity += 1;
       } else {
         cart.push({
-          id: product.id,
+          productId: product.id,
           name: product.name,
-          price: Number(product.price || 0),
-          vat_rate: Number(product.vat_rate || 23),
+          price: Number(product.price),
+          vat: Number(product.vat),
           quantity: 1
         });
       }
 
-      displayCart();
-    }
+      renderCart();
 
-    function removeFromCart(productId) {
-      cart = cart.filter(
-        item => item.id !== productId
+      showMessage(
+        saleMessage,
+        `${product.name} dodano na paragon.`,
+        "success"
       );
-
-      displayCart();
     }
 
-    function changeQuantity(productId, amount) {
+    function changeQuantity(productId, change) {
       const item = cart.find(
-        cartItem => cartItem.id === productId
+        cartItem => cartItem.productId === productId
       );
 
       if (!item) {
         return;
       }
 
-      item.quantity += amount;
+      item.quantity += change;
 
       if (item.quantity <= 0) {
-        removeFromCart(productId);
-        return;
+        cart = cart.filter(
+          cartItem => cartItem.productId !== productId
+        );
       }
 
-      displayCart();
+      renderCart();
     }
 
-    function displayCart() {
-      cartContainer.innerHTML = "";
+    function removeFromCart(productId) {
+      cart = cart.filter(
+        item => item.productId !== productId
+      );
+
+      renderCart();
+    }
+
+    function calculateTotal() {
+      return cart.reduce((total, item) => {
+        return total + item.price * item.quantity;
+      }, 0);
+    }
+
+    function renderCart() {
+      cartList.innerHTML = "";
 
       if (!cart.length) {
-        cartContainer.innerHTML =
+        cartList.innerHTML =
           '<p class="empty">Paragon jest pusty.</p>';
-        totalElement.textContent = "0.00";
+
+        totalValue.textContent = "0.00";
         return;
       }
 
-      let total = 0;
-
       cart.forEach(item => {
-        const lineTotal = item.price * item.quantity;
-        total += lineTotal;
+        const lineTotal =
+          item.price * item.quantity;
 
         const row = document.createElement("div");
         row.className = "cart-row";
 
         row.innerHTML = `
-          <span>
-            ${escapeHtml(item.name)}
-            × ${item.quantity}
-              
+          <div>
+            <strong>${escapeHtml(item.name)}</strong>  
 
-            <small>${item.price.toFixed(2)} zł/szt.</small>
-          </span>
+            <small>
+              ${money(item.price)} zł/szt.
+              | Razem: ${money(lineTotal)} zł
+            </small>
+          </div>
 
-          <span>
-            <strong>${lineTotal.toFixed(2)} zł</strong>
-            <button
-              type="button"
-              class="danger">
-              Usuń
-            </button>
-          </span>
+          <div class="quantity-controls">
+            <button data-action="minus">−</button>
+            <strong>${item.quantity}</strong>
+            <button data-action="plus">+</button>
+          </div>
+
+          <button
+            class="small danger"
+            data-action="remove">
+            Usuń
+          </button>
         `;
 
-        const removeButton = row.querySelector(".danger");
+        row.querySelector('[data-action="minus"]')
+          .addEventListener("click", () => {
+            changeQuantity(item.productId, -1);
+          });
 
-        removeButton.addEventListener("click", () => {
-          removeFromCart(item.id);
-        });
+        row.querySelector('[data-action="plus"]')
+          .addEventListener("click", () => {
+            changeQuantity(item.productId, 1);
+          });
 
-        row.addEventListener("dblclick", () => {
-          changeQuantity(item.id, 1);
-        });
+        row.querySelector('[data-action="remove"]')
+          .addEventListener("click", () => {
+            removeFromCart(item.productId);
+          });
 
-        cartContainer.appendChild(row);
+        cartList.appendChild(row);
       });
 
-      totalElement.textContent = total.toFixed(2);
+      totalValue.textContent =
+        money(calculateTotal());
     }
 
-    async function completeSale() {
+    function finishSale() {
       clearMessage(saleMessage);
-
-      const { data: userData } =
-        await supabaseClient.auth.getUser();
-
-      const user = userData.user;
-
-      if (!user) {
-        showMessage(
-          saleMessage,
-          "Najpierw się zaloguj.",
-          "error"
-        );
-        return;
-      }
 
       if (!cart.length) {
         showMessage(
@@ -736,99 +837,142 @@
         return;
       }
 
-      const total = cart.reduce((sum, item) => {
-        return sum + item.price * item.quantity;
-      }, 0);
+      const sale = {
+        id: createId(),
+        number: "PAR-" + Date.now(),
+        date: new Date().toLocaleString("pl-PL"),
+        payment: paymentMethod.value,
+        items: cart.map(item => ({
+          name: item.name,
+          price: item.price,
+          vat: item.vat,
+          quantity: item.quantity
+        })),
+        total: calculateTotal()
+      };
 
-      const receiptNumber =
-        "PAR-" +
-        new Date().getTime();
+      const previousSales = JSON.parse(
+        localStorage.getItem(SALES_KEY) || "[]"
+      );
 
-      const paymentMethod =
-        paymentMethodSelect.value;
+      previousSales.push(sale);
 
-      const { data: sale, error: saleError } =
-        await supabaseClient
-          .from("sales")
-          .insert({
-            user_id: user.id,
-            receipt_number: receiptNumber,
-            total: Number(total.toFixed(2)),
-            payment_method: paymentMethod,
-            status: "completed"
-          })
-          .select()
-          .single();
+      localStorage.setItem(
+        SALES_KEY,
+        JSON.stringify(previousSales)
+      );
 
-      if (saleError) {
-        showMessage(
-          saleMessage,
-          "Nie udało się zapisać sprzedaży: " +
-            saleError.message,
-          "error"
-        );
-        return;
-      }
+      lastReceipt = sale;
+      renderReceipt();
 
-      const saleItems = cart.map(item => ({
-        sale_id: sale.id,
-        product_id: item.id,
-        product_name: item.name,
-        quantity: item.quantity,
-        unit_price: item.price,
-        vat_rate: item.vat_rate
-      }));
-
-      const { error: itemsError } =
-        await supabaseClient
-          .from("sale_items")
-          .insert(saleItems);
-
-      if (itemsError) {
-        showMessage(
-          saleMessage,
-          "Sprzedaż utworzona, ale nie zapisano pozycji: " +
-            itemsError.message,
-          "error"
-        );
-        return;
-      }
+      cart = [];
+      renderCart();
 
       showMessage(
         saleMessage,
-        "Sprzedaż zapisana. Numer paragonu: " +
-          receiptNumber,
+        `Sprzedaż zapisana lokalnie. Numer: ${sale.number}`,
         "success"
       );
-
-      cart = [];
-      displayCart();
     }
 
-    loginButton.addEventListener("click", login);
-    registerButton.addEventListener("click", register);
-    logoutButton.addEventListener("click", logout);
-    addProductButton.addEventListener("click", addProduct);
-    completeSaleButton.addEventListener("click", completeSale);
-    searchInput.addEventListener("input", filterProducts);
+    function renderReceipt() {
+      if (!lastReceipt) {
+        receipt.classList.add("hidden");
+        printReceiptButton.classList.add("hidden");
+        return;
+      }
 
-    supabaseClient.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session && session.user) {
-          userInfo.textContent =
-            "Zalogowany: " + session.user.email;
+      receipt.classList.remove("hidden");
+      printReceiptButton.classList.remove("hidden");
 
-          logoutButton.style.display = "block";
-          await loadProducts();
-        } else {
-          userInfo.textContent = "Niezalogowany";
-          logoutButton.style.display = "none";
-        }
+      let itemsHtml = "";
+
+      lastReceipt.items.forEach(item => {
+        const lineTotal =
+          item.price * item.quantity;
+
+        itemsHtml += `
+          <div class="receipt-line">
+            <span>
+              ${escapeHtml(item.name)}
+              x${item.quantity}
+            </span>
+            <span>${money(lineTotal)} zł</span>
+          </div>
+        `;
+      });
+
+      receipt.innerHTML = `
+        <h3>PARAGON</h3>
+
+        <div>Numer: ${lastReceipt.number}</div>
+        <div>Data: ${lastReceipt.date}</div>
+        <div>Płatność: ${escapeHtml(lastReceipt.payment)}</div>
+
+        <hr>
+
+        ${itemsHtml}
+
+        <hr>
+
+        <div class="receipt-line">
+          <strong>RAZEM:</strong>
+          <strong>${money(lastReceipt.total)} zł</strong>
+        </div>
+
+        <p style="text-align:center">
+          Dziękujemy za zakupy
+        </p>
+      `;
+    }
+
+    saveProductButton.addEventListener(
+      "click",
+      saveProduct
+    );
+
+    cancelEditButton.addEventListener(
+      "click",
+      () => {
+        clearProductForm();
+        clearMessage(productMessage);
       }
     );
 
-    updateUserInterface();
-    displayCart();
+    searchInput.addEventListener(
+      "input",
+      renderProducts
+    );
+
+    finishSaleButton.addEventListener(
+      "click",
+      finishSale
+    );
+
+    clearCartButton.addEventListener(
+      "click",
+      () => {
+        cart = [];
+        renderCart();
+
+        showMessage(
+          saleMessage,
+          "Paragon został wyczyszczony.",
+          "success"
+        );
+      }
+    );
+
+    printReceiptButton.addEventListener(
+      "click",
+      () => {
+        window.print();
+      }
+    );
+
+    renderProducts();
+    renderCart();
+    renderReceipt();
   </script>
 </body>
 </html>
