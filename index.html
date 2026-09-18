@@ -8,6 +8,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       font-family: Arial, sans-serif;
@@ -19,6 +23,10 @@
       background: #0f172a;
       color: white;
       padding: 20px;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
     }
 
     main {
@@ -34,12 +42,17 @@
       background: white;
       padding: 20px;
       border-radius: 12px;
-      box-shadow: 0 2px 8px #0001;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08 );
     }
 
-    input, button, select {
+    h2 {
+      margin-top: 0;
+    }
+
+    input,
+    button,
+    select {
       width: 100%;
-      box-sizing: border-box;
       padding: 11px;
       margin: 6px 0;
       border-radius: 7px;
@@ -58,6 +71,17 @@
       background: #1d4ed8;
     }
 
+    button.danger {
+      background: #dc2626;
+      width: auto;
+      padding: 6px 9px;
+      margin: 0 0 0 8px;
+    }
+
+    button.danger:hover {
+      background: #b91c1c;
+    }
+
     .product {
       display: flex;
       justify-content: space-between;
@@ -67,16 +91,27 @@
       padding: 10px 0;
     }
 
+    .product:last-child {
+      border-bottom: none;
+    }
+
     .product button {
       width: auto;
       margin: 0;
+      white-space: nowrap;
     }
 
     .cart-row {
       display: flex;
       justify-content: space-between;
-      padding: 9px 0;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
       border-bottom: 1px solid #e2e8f0;
+    }
+
+    .cart-row:last-child {
+      border-bottom: none;
     }
 
     .total {
@@ -87,15 +122,36 @@
     }
 
     .message {
+      min-height: 20px;
       margin-top: 10px;
       padding: 10px;
       border-radius: 6px;
       background: #e0f2fe;
+      color: #075985;
     }
 
-    @media (max-width: 750px ) {
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .empty {
+      color: #64748b;
+    }
+
+    @media (max-width: 750px) {
       main {
         grid-template-columns: 1fr;
+      }
+
+      .product,
+      .cart-row {
+        align-items: flex-start;
       }
     }
   </style>
@@ -108,48 +164,89 @@
   </header>
 
   <main>
+    <!-- Logowanie -->
     <section>
       <h2>Logowanie</h2>
 
-      <input id="email" type="email" placeholder="E-mail">
-      <input id="password" type="password" placeholder="Hasło">
+      <input
+        id="email"
+        type="email"
+        placeholder="E-mail"
+      >
 
-      <button onclick="login()">Zaloguj</button>
-      <button onclick="register()">Utwórz konto</button>
+      <input
+        id="password"
+        type="password"
+        placeholder="Hasło"
+      >
+
+      <button id="loginButton">Zaloguj</button>
+      <button id="registerButton">Utwórz konto</button>
+      <button id="logoutButton" style="display: none; background: #64748b;">
+        Wyloguj
+      </button>
 
       <div id="authMessage" class="message"></div>
     </section>
 
+    <!-- Dodawanie produktu -->
     <section>
       <h2>Dodaj produkt</h2>
 
-      <input id="productName" placeholder="Nazwa produktu">
-      <input id="productBarcode" placeholder="Kod kreskowy">
-      <input id="productPrice" type="number" step="0.01" placeholder="Cena brutto">
-      <input id="productVat" type="number" value="23" placeholder="VAT %">
+      <input
+        id="productName"
+        placeholder="Nazwa produktu"
+      >
 
-      <button onclick="addProduct()">Dodaj produkt</button>
+      <input
+        id="productBarcode"
+        placeholder="Kod kreskowy"
+      >
+
+      <input
+        id="productPrice"
+        type="number"
+        min="0"
+        step="0.01"
+        placeholder="Cena brutto"
+      >
+
+      <input
+        id="productVat"
+        type="number"
+        min="0"
+        value="23"
+        placeholder="VAT %"
+      >
+
+      <button id="addProductButton">Dodaj produkt</button>
     </section>
 
+    <!-- Lista produktów -->
     <section>
       <h2>Produkty</h2>
 
       <input
         id="search"
         placeholder="Szukaj produktu lub kodu..."
-        oninput="filterProducts()"
       >
 
-      <div id="products"></div>
+      <div id="products">
+        <p class="empty">Zaloguj się, aby zobaczyć produkty.</p>
+      </div>
     </section>
 
+    <!-- Koszyk i sprzedaż -->
     <section>
       <h2>Paragon</h2>
 
-      <div id="cart"></div>
+      <div id="cart">
+        <p class="empty">Paragon jest pusty.</p>
+      </div>
 
       <div class="total">
-        Razem: <span id="total">0.00</span> zł
+        Razem:
+        <span id="total">0.00</span> zł
       </div>
 
       <select id="paymentMethod">
@@ -158,99 +255,288 @@
         <option value="transfer">Przelew</option>
       </select>
 
-      <button onclick="completeSale()">Zakończ sprzedaż</button>
+      <button id="completeSaleButton">
+        Zakończ sprzedaż
+      </button>
+
       <div id="saleMessage" class="message"></div>
     </section>
   </main>
 
   <script>
-    const SUPABASE_URL = "https://kbmckegbihtnjggvxbnq.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_g3Ip7s1jBzSenb_UVG2P9A_kY8h0kCY";
+    /*
+      KONFIGURACJA SUPABASE
 
+      Adres projektu oraz klucz publiczny.
+      Nie wstawiaj tutaj klucza service_role.
+    */
 
-    const supabaseClient = supabase.createClient(
+    const SUPABASE_URL =
+      "https://kbmckegbhtnjggvvxnbq.supabase.co";
+
+    const SUPABASE_ANON_KEY =
+      "sb_publishable_g3Ip7s1jBzSenb_UVG2P9A_kY8h0kCY";
+
+    const supabaseClient = window.supabase.createClient(
       SUPABASE_URL,
       SUPABASE_ANON_KEY
-    );
+     );
 
     let allProducts = [];
     let cart = [];
 
+    const userInfo = document.getElementById("userInfo");
+    const authMessage = document.getElementById("authMessage");
+    const saleMessage = document.getElementById("saleMessage");
+    const productsContainer = document.getElementById("products");
+    const cartContainer = document.getElementById("cart");
+    const totalElement = document.getElementById("total");
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+
+    const productNameInput = document.getElementById("productName");
+    const productBarcodeInput = document.getElementById("productBarcode");
+    const productPriceInput = document.getElementById("productPrice");
+    const productVatInput = document.getElementById("productVat");
+    const searchInput = document.getElementById("search");
+
+    const loginButton = document.getElementById("loginButton");
+    const registerButton = document.getElementById("registerButton");
+    const logoutButton = document.getElementById("logoutButton");
+    const addProductButton = document.getElementById("addProductButton");
+    const completeSaleButton = document.getElementById("completeSaleButton");
+    const paymentMethodSelect = document.getElementById("paymentMethod");
+
+    function showMessage(element, text, type = "") {
+      element.textContent = text;
+      element.className = "message " + type;
+    }
+
+    function clearMessage(element) {
+      element.textContent = "";
+      element.className = "message";
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
     async function register() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      clearMessage(authMessage);
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        showMessage(
+          authMessage,
+          "Podaj e-mail i hasło.",
+          "error"
+        );
+        return;
+      }
+
+      if (password.length < 6) {
+        showMessage(
+          authMessage,
+          "Hasło musi mieć co najmniej 6 znaków.",
+          "error"
+        );
+        return;
+      }
 
       const { error } = await supabaseClient.auth.signUp({
         email,
         password
       });
 
-      document.getElementById("authMessage").textContent =
-        error ? error.message : "Konto utworzone. Sprawdź e-mail.";
+      if (error) {
+        showMessage(authMessage, error.message, "error");
+        return;
+      }
+
+      showMessage(
+        authMessage,
+        "Konto utworzone. Sprawdź skrzynkę e-mail, jeśli wymagana jest aktywacja.",
+        "success"
+      );
     }
 
     async function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
+      clearMessage(authMessage);
 
-      const { data, error } =
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!email || !password) {
+        showMessage(
+          authMessage,
+          "Podaj e-mail i hasło.",
+          "error"
+        );
+        return;
+      }
+
+      const { error } =
         await supabaseClient.auth.signInWithPassword({
           email,
           password
         });
 
-      document.getElementById("authMessage").textContent =
-        error ? error.message : "Zalogowano poprawnie.";
+      if (error) {
+        showMessage(authMessage, error.message, "error");
+        return;
+      }
 
-      if (!error) {
-        document.getElementById("userInfo").textContent =
-          "Zalogowany: " + data.user.email;
+      showMessage(
+        authMessage,
+        "Zalogowano poprawnie.",
+        "success"
+      );
 
-        loadProducts();
+      await updateUserInterface();
+      await loadProducts();
+    }
+
+    async function logout() {
+      const { error } = await supabaseClient.auth.signOut();
+
+      if (error) {
+        showMessage(authMessage, error.message, "error");
+        return;
+      }
+
+      userInfo.textContent = "Niezalogowany";
+      logoutButton.style.display = "none";
+
+      productsContainer.innerHTML =
+        '<p class="empty">Zaloguj się, aby zobaczyć produkty.</p>';
+
+      cart = [];
+      displayCart();
+
+      showMessage(
+        authMessage,
+        "Wylogowano.",
+        "success"
+      );
+    }
+
+    async function updateUserInterface() {
+      const { data } = await supabaseClient.auth.getUser();
+      const user = data.user;
+
+      if (user) {
+        userInfo.textContent = "Zalogowany: " + user.email;
+        logoutButton.style.display = "block";
+      } else {
+        userInfo.textContent = "Niezalogowany";
+        logoutButton.style.display = "none";
       }
     }
 
     async function addProduct() {
-      const name = document.getElementById("productName").value;
-      const barcode = document.getElementById("productBarcode").value;
-      const price = Number(document.getElementById("productPrice").value);
-      const vatRate = Number(document.getElementById("productVat").value);
+      clearMessage(authMessage);
 
-      if (!name || !price) {
-        alert("Podaj nazwę i cenę produktu.");
+      const { data } = await supabaseClient.auth.getUser();
+      const user = data.user;
+
+      if (!user) {
+        showMessage(
+          authMessage,
+          "Najpierw się zaloguj.",
+          "error"
+        );
+        return;
+      }
+
+      const name = productNameInput.value.trim();
+      const barcode = productBarcodeInput.value.trim();
+      const price = Number(productPriceInput.value);
+      const vatRate = Number(productVatInput.value);
+
+      if (!name) {
+        showMessage(
+          authMessage,
+          "Podaj nazwę produktu.",
+          "error"
+        );
+        return;
+      }
+
+      if (!Number.isFinite(price) || price < 0) {
+        showMessage(
+          authMessage,
+          "Podaj prawidłową cenę.",
+          "error"
+        );
+        return;
+      }
+
+      if (!Number.isFinite(vatRate) || vatRate < 0) {
+        showMessage(
+          authMessage,
+          "Podaj prawidłową stawkę VAT.",
+          "error"
+        );
         return;
       }
 
       const { error } = await supabaseClient
         .from("products")
         .insert({
-          name,
+          name: name,
           barcode: barcode || null,
-          price,
+          price: price,
           vat_rate: vatRate
         });
 
       if (error) {
-        alert(error.message);
+        showMessage(authMessage, error.message, "error");
         return;
       }
 
-      document.getElementById("productName").value = "";
-      document.getElementById("productBarcode").value = "";
-      document.getElementById("productPrice").value = "";
+      productNameInput.value = "";
+      productBarcodeInput.value = "";
+      productPriceInput.value = "";
+      productVatInput.value = "23";
+
+      showMessage(
+        authMessage,
+        "Produkt został dodany.",
+        "success"
+      );
 
       await loadProducts();
     }
 
     async function loadProducts() {
+      const { data: userData } =
+        await supabaseClient.auth.getUser();
+
+      if (!userData.user) {
+        return;
+      }
+
       const { data, error } = await supabaseClient
         .from("products")
         .select("*")
         .eq("active", true)
-        .order("name");
+        .order("name", { ascending: true });
 
       if (error) {
-        alert(error.message);
+        productsContainer.innerHTML = "";
+        showMessage(
+          authMessage,
+          "Nie można pobrać produktów: " + error.message,
+          "error"
+        );
         return;
       }
 
@@ -259,11 +545,11 @@
     }
 
     function displayProducts(products) {
-      const container = document.getElementById("products");
-      container.innerHTML = "";
+      productsContainer.innerHTML = "";
 
       if (!products.length) {
-        container.innerHTML = "<p>Brak produktów.</p>";
+        productsContainer.innerHTML =
+          '<p class="empty">Brak produktów.</p>';
         return;
       }
 
@@ -271,41 +557,62 @@
         const row = document.createElement("div");
         row.className = "product";
 
+        const price = Number(product.price || 0).toFixed(2);
+
         row.innerHTML = `
           <div>
             <strong>${escapeHtml(product.name)}</strong>  
 
-            <small>${product.barcode || "brak kodu"}</small>
+            <small>
+              Kod: ${escapeHtml(product.barcode || "brak")}
+            </small>
           </div>
+
           <div>
-            <strong>${Number(product.price).toFixed(2)} zł</strong>
-            <button onclick="addToCart('${product.id}')">Dodaj</button>
+            <strong>${price} zł</strong>
+            <button
+              type="button"
+              data-product-id="${escapeHtml(product.id)}">
+              Dodaj
+            </button>
           </div>
         `;
 
-        container.appendChild(row);
+        const addButton = row.querySelector("button");
+
+        addButton.addEventListener("click", () => {
+          addToCart(product.id);
+        });
+
+        productsContainer.appendChild(row);
       });
     }
 
     function filterProducts() {
-      const search = document
-        .getElementById("search")
-        .value
-        .toLowerCase();
+      const search = searchInput.value.trim().toLowerCase();
 
-      const filtered = allProducts.filter(product =>
-        product.name.toLowerCase().includes(search) ||
-        (product.barcode || "").toLowerCase().includes(search)
-      );
+      const filtered = allProducts.filter(product => {
+        const name = String(product.name || "").toLowerCase();
+        const barcode = String(product.barcode || "").toLowerCase();
+
+        return name.includes(search) || barcode.includes(search);
+      });
 
       displayProducts(filtered);
     }
 
     function addToCart(productId) {
-      const product = allProducts.find(item => item.id === productId);
-      if (!product) return;
+      const product = allProducts.find(
+        item => item.id === productId
+      );
 
-      const existing = cart.find(item => item.id === productId);
+      if (!product) {
+        return;
+      }
+
+      const existing = cart.find(
+        item => item.id === productId
+      );
 
       if (existing) {
         existing.quantity += 1;
@@ -313,8 +620,8 @@
         cart.push({
           id: product.id,
           name: product.name,
-          price: Number(product.price),
-          vat_rate: Number(product.vat_rate),
+          price: Number(product.price || 0),
+          vat_rate: Number(product.vat_rate || 23),
           quantity: 1
         });
       }
@@ -323,13 +630,41 @@
     }
 
     function removeFromCart(productId) {
-      cart = cart.filter(item => item.id !== productId);
+      cart = cart.filter(
+        item => item.id !== productId
+      );
+
+      displayCart();
+    }
+
+    function changeQuantity(productId, amount) {
+      const item = cart.find(
+        cartItem => cartItem.id === productId
+      );
+
+      if (!item) {
+        return;
+      }
+
+      item.quantity += amount;
+
+      if (item.quantity <= 0) {
+        removeFromCart(productId);
+        return;
+      }
+
       displayCart();
     }
 
     function displayCart() {
-      const container = document.getElementById("cart");
-      container.innerHTML = "";
+      cartContainer.innerHTML = "";
+
+      if (!cart.length) {
+        cartContainer.innerHTML =
+          '<p class="empty">Paragon jest pusty.</p>';
+        totalElement.textContent = "0.00";
+        return;
+      }
 
       let total = 0;
 
@@ -342,48 +677,75 @@
 
         row.innerHTML = `
           <span>
-            ${escapeHtml(item.name)} × ${item.quantity}
+            ${escapeHtml(item.name)}
+            × ${item.quantity}
+              
+
+            <small>${item.price.toFixed(2)} zł/szt.</small>
           </span>
+
           <span>
-            ${lineTotal.toFixed(2)} zł
+            <strong>${lineTotal.toFixed(2)} zł</strong>
             <button
-              style="width:auto;padding:5px 8px;background:#dc2626"
-              onclick="removeFromCart('${item.id}')">
+              type="button"
+              class="danger">
               Usuń
             </button>
           </span>
         `;
 
-        container.appendChild(row);
+        const removeButton = row.querySelector(".danger");
+
+        removeButton.addEventListener("click", () => {
+          removeFromCart(item.id);
+        });
+
+        row.addEventListener("dblclick", () => {
+          changeQuantity(item.id, 1);
+        });
+
+        cartContainer.appendChild(row);
       });
 
-      document.getElementById("total").textContent = total.toFixed(2);
+      totalElement.textContent = total.toFixed(2);
     }
 
     async function completeSale() {
-      const userResult = await supabaseClient.auth.getUser();
-      const user = userResult.data.user;
+      clearMessage(saleMessage);
+
+      const { data: userData } =
+        await supabaseClient.auth.getUser();
+
+      const user = userData.user;
 
       if (!user) {
-        alert("Najpierw się zaloguj.");
+        showMessage(
+          saleMessage,
+          "Najpierw się zaloguj.",
+          "error"
+        );
         return;
       }
 
       if (!cart.length) {
-        alert("Paragon jest pusty.");
+        showMessage(
+          saleMessage,
+          "Paragon jest pusty.",
+          "error"
+        );
         return;
       }
 
-      const total = cart.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
+      const total = cart.reduce((sum, item) => {
+        return sum + item.price * item.quantity;
+      }, 0);
 
       const receiptNumber =
-        "PAR-" + Date.now();
+        "PAR-" +
+        new Date().getTime();
 
       const paymentMethod =
-        document.getElementById("paymentMethod").value;
+        paymentMethodSelect.value;
 
       const { data: sale, error: saleError } =
         await supabaseClient
@@ -391,14 +753,20 @@
           .insert({
             user_id: user.id,
             receipt_number: receiptNumber,
-            total,
-            payment_method: paymentMethod
+            total: Number(total.toFixed(2)),
+            payment_method: paymentMethod,
+            status: "completed"
           })
           .select()
           .single();
 
       if (saleError) {
-        alert(saleError.message);
+        showMessage(
+          saleMessage,
+          "Nie udało się zapisać sprzedaży: " +
+            saleError.message,
+          "error"
+        );
         return;
       }
 
@@ -417,34 +785,50 @@
           .insert(saleItems);
 
       if (itemsError) {
-        alert(itemsError.message);
+        showMessage(
+          saleMessage,
+          "Sprzedaż utworzona, ale nie zapisano pozycji: " +
+            itemsError.message,
+          "error"
+        );
         return;
       }
 
-      document.getElementById("saleMessage").textContent =
-        "Sprzedaż zapisana. Numer: " + receiptNumber;
+      showMessage(
+        saleMessage,
+        "Sprzedaż zapisana. Numer paragonu: " +
+          receiptNumber,
+        "success"
+      );
 
       cart = [];
       displayCart();
     }
 
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
+    loginButton.addEventListener("click", login);
+    registerButton.addEventListener("click", register);
+    logoutButton.addEventListener("click", logout);
+    addProductButton.addEventListener("click", addProduct);
+    completeSaleButton.addEventListener("click", completeSale);
+    searchInput.addEventListener("input", filterProducts);
 
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        document.getElementById("userInfo").textContent =
-          "Zalogowany: " + session.user.email;
+    supabaseClient.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (session && session.user) {
+          userInfo.textContent =
+            "Zalogowany: " + session.user.email;
 
-        loadProducts();
+          logoutButton.style.display = "block";
+          await loadProducts();
+        } else {
+          userInfo.textContent = "Niezalogowany";
+          logoutButton.style.display = "none";
+        }
       }
-    });
+    );
+
+    updateUserInterface();
+    displayCart();
   </script>
 </body>
 </html>
