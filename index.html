@@ -82,6 +82,9 @@
     .add-box input { width: 100%; padding: 11px; border: 2px solid #8e651c; background: #fff8c9; }
     .product-line { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; border-bottom: 1px dotted #83601d; padding: 9px 0; }
     .product-line small { display: block; opacity: .7; }
+    .product-number { display: inline-flex; align-items: center; justify-content: center; width: 29px; height: 29px; margin-right: 7px; border-radius: 50%; background: #b32925; color: #fff4c7; border: 2px solid #6b1c16; font-weight: bold; box-shadow: 1px 2px 0 #543018; }
+    .quick-add { border-top: 2px dashed #7c5920; margin-top: 16px; padding-top: 13px; }
+    .quick-add-title { font-weight: bold; letter-spacing: 1px; margin-bottom: 8px; }
     .product-button { background: #f4d679; border: 2px solid #765319; border-radius: 5px; padding: 8px 11px; cursor: pointer; font-weight: bold; color: var(--ink); }
     .product-button:hover { background: #fff0a4; }
 
@@ -152,7 +155,12 @@
       <section class="card" style="transform:rotate(.35deg)">
         <span class="pin left"></span><span class="pin right"></span>
         <div class="add-box" style="grid-template-columns:1fr"><input id="search" placeholder="Szukaj na liście produktów..."></div>
-        <p>Każdy przycisk na żółtej kartce dodaje produkt na paragon. Nazwę i cenę możesz zmienić przez przycisk <b>EDYTUJ</b>.</p>
+        <p>Każdy numer na żółtej kartce oznacza produkt. Kliknij <b>DODAJ</b>, aby doliczyć go do sumy. Nazwę i cenę możesz zmienić przez <b>EDYTUJ</b>.</p>
+        <div class="quick-add">
+          <div class="quick-add-title">DODAJ INNY PRODUKT DO SUMY</div>
+          <div class="add-box"><input id="extraName" placeholder="Nazwa spoza kartki"><input id="extraPrice" type="number" min="0" step="0.01" placeholder="Cena zł"></div>
+          <button class="product-button" id="addExtra" style="width:100%">+ DOLICZ DO PARAGONU</button>
+        </div>
         <button class="product-button" id="clearCart" style="width:100%; margin-top:10px">WYCZYŚĆ PARAGON</button>
         <button class="product-button" id="printBtn" style="width:100%; margin-top:8px">DRUKUJ PARAGON</button>
         <div id="cartList" style="margin-top:14px"></div>
@@ -181,9 +189,10 @@
       const list = $('productList'); list.innerHTML = '';
       const filtered = products.filter(p => p.name.toLowerCase().includes(q));
       if (!filtered.length) { list.innerHTML = '<div class="empty">Lista jest pusta. Dodaj pierwszy produkt powyżej.</div>'; return; }
-      filtered.forEach(p => {
+      filtered.forEach((p, filteredIndex) => {
         const row = document.createElement('div'); row.className = 'product-line';
-        row.innerHTML = `<div><b>${esc(p.name)}</b><small>${money(p.price)} zł</small></div><div><button class="product-button add">DODAJ</button><button class="product-button edit">EDYTUJ</button></div>`;
+        const number = p.number || (products.indexOf(p) + 1);
+        row.innerHTML = `<div><span class="product-number">${number}</span><b>${esc(p.name)}</b><small>${money(p.price)} zł</small></div><div><button class="product-button add">DODAJ</button><button class="product-button edit">EDYTUJ</button></div>`;
         row.querySelector('.add').onclick = () => addToCart(p);
         row.querySelector('.edit').onclick = () => editProduct(p);
         list.appendChild(row);
@@ -212,7 +221,8 @@
       p.name = name.trim(); p.price = Number(price); save(); renderProducts(); toast('Zmieniono produkt');
     }
 
-    $('addProduct').onclick = () => { const name = $('newName').value.trim(); const price = Number($('newPrice').value); if (!name || !Number.isFinite(price) || price < 0) { toast('Wpisz nazwę i poprawną cenę'); return; } products.push({id:id(),name,price}); save(); $('newName').value=''; $('newPrice').value=''; renderProducts(); toast('Produkt dodany do żółtej listy'); };
+    $('addProduct').onclick = () => { const name = $('newName').value.trim(); const price = Number($('newPrice').value); if (!name || !Number.isFinite(price) || price < 0) { toast('Wpisz nazwę i poprawną cenę'); return; } products.push({id:id(), number: products.length + 1, name, price}); save(); $('newName').value=''; $('newPrice').value=''; renderProducts(); toast('Produkt dodany do żółtej listy'); };
+    $('addExtra').onclick = () => { const name = $('extraName').value.trim(); const price = Number($('extraPrice').value); if (!name || !Number.isFinite(price) || price < 0) { toast('Wpisz nazwę i poprawną cenę dodatkowego produktu'); return; } addToCart({id:'extra-' + id(), name, price}); $('extraName').value=''; $('extraPrice').value=''; $('status').textContent='Dodatkowy produkt doliczony do sumy'; };
     $('search').oninput = renderProducts;
     $('payment').onchange = renderReceipt;
     $('clearCart').onclick = () => { cart=[]; renderCart(); toast('Paragon wyczyszczony'); };
