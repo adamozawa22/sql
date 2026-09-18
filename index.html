@@ -3,976 +3,226 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lokalna kasa fiskalna</title>
-
+  <title>Stara kasa sklepowa</title>
   <style>
-    * {
-      box-sizing: border-box;
+    :root {
+      --wood-dark: #3b2115;
+      --wood: #70452b;
+      --wood-light: #9a633c;
+      --brass: #c8953e;
+      --brass-light: #edc56b;
+      --cream: #f8e8b2;
+      --paper: #fff2a8;
+      --ink: #302014;
+      --red: #9f2f25;
+      --green: #41623e;
+      --shadow: rgba(32, 15, 5, .45);
     }
 
+    * { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f1f5f9;
-      color: #0f172a;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Georgia, 'Times New Roman', serif;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(255,255,255,.08) 0 2px, transparent 3px),
+        linear-gradient(135deg, #21130e, #5a321f 45%, #25140e);
+      background-size: 7px 7px, auto;
     }
 
-    header {
-      background: #0f172a;
-      color: white;
-      padding: 20px;
+    .app { max-width: 1450px; margin: auto; padding: 24px; }
+    .brand {
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+      color: #ffe7a1; text-shadow: 2px 2px #21110b; margin-bottom: 18px;
     }
+    .brand h1 { margin: 0; font-size: clamp(28px, 4vw, 52px); letter-spacing: 2px; }
+    .brand p { margin: 5px 0 0; color: #dfb879; font-style: italic; }
+    .badge { color: #25170e; background: var(--brass-light); border: 3px solid #6f431d; border-radius: 50%; padding: 18px 12px; font-weight: bold; text-align: center; box-shadow: inset 0 0 0 3px #ffe59a, 3px 4px 0 #1f1009; }
 
-    header h1 {
-      margin: 0 0 8px;
+    .register {
+      background: linear-gradient(145deg, #a86b41, #5f371f 62%, #321a11);
+      border: 8px solid #26130b; border-radius: 25px; padding: 18px;
+      box-shadow: 0 15px 35px var(--shadow), inset 0 0 0 3px #c28350;
     }
+    .top-panel { display: grid; grid-template-columns: 1fr 1.15fr; gap: 18px; }
+    .wood-panel { background: rgba(42, 20, 11, .62); border: 4px solid #32170d; border-radius: 14px; padding: 16px; box-shadow: inset 0 3px 10px #140904; }
 
-    main {
-      max-width: 1200px;
-      margin: 25px auto;
-      padding: 0 15px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+    .lcd {
+      background: #17251b; color: #a8ef8c; border: 7px solid #2d2116; border-radius: 9px; padding: 18px;
+      font-family: 'Courier New', monospace; box-shadow: inset 0 0 18px #071108, 0 3px 0 #c08b42;
+      min-height: 132px; display: flex; flex-direction: column; justify-content: center;
     }
+    .lcd-label { color: #608d5d; font-size: 12px; letter-spacing: 2px; }
+    .lcd-total { font-size: clamp(38px, 6vw, 70px); line-height: 1; text-align: right; text-shadow: 0 0 8px #80d56c; }
+    .lcd-name { text-align: right; color: #d0ffad; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    section {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    .keypad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin-top: 15px; }
+    button, input, select { font: inherit; }
+    .key {
+      border: 3px solid #362012; border-radius: 8px; padding: 13px 6px; cursor: pointer; color: #29170d;
+      background: linear-gradient(#f1cc78, #a96c2e); box-shadow: 0 4px 0 #3a1d0e, inset 0 1px #ffe9a8; font-weight: bold;
+      transition: transform .12s, filter .12s;
     }
+    .key:hover { filter: brightness(1.15); transform: translateY(-2px); }
+    .key:active { transform: translateY(3px); box-shadow: 0 1px 0 #3a1d0e; }
+    .key.red { background: linear-gradient(#d56f5a, #81271f); color: #fff1d3; }
+    .key.green { background: linear-gradient(#8bb07a, #3e633a); color: #fff8d3; }
+    .key.wide { grid-column: span 2; }
 
-    h2 {
-      margin-top: 0;
-    }
+    .cash-row { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .cash-row select, .cash-row input { flex: 1; min-width: 140px; padding: 12px; border-radius: 7px; border: 3px solid #382012; background: #f8e4a6; color: var(--ink); }
 
-    input,
-    select,
-    button {
-      width: 100%;
-      padding: 11px;
-      margin: 6px 0;
-      border-radius: 7px;
-      border: 1px solid #cbd5e1;
-      font-size: 15px;
-    }
+    .workspace { display: grid; grid-template-columns: minmax(280px, .85fr) minmax(330px, 1.15fr); gap: 18px; margin-top: 18px; align-items: start; }
+    .card { background: var(--paper); border: 5px solid #8e651c; padding: 18px; box-shadow: 5px 7px 0 rgba(27, 13, 5, .35); position: relative; transform: rotate(-.4deg); }
+    .card:before { content: 'LISTA PRODUKTÓW'; display: block; text-align: center; font-weight: bold; letter-spacing: 3px; padding-bottom: 12px; border-bottom: 2px dashed #7c5920; margin-bottom: 12px; }
+    .pin { position: absolute; width: 16px; height: 16px; border-radius: 50%; background: #b32925; top: 9px; box-shadow: inset 2px 2px 0 #f58d70, 1px 2px 0 #4a160f; }
+    .pin.left { left: 14px; } .pin.right { right: 14px; }
+    .add-box { display: grid; grid-template-columns: 1fr 110px; gap: 8px; margin-bottom: 14px; }
+    .add-box input { width: 100%; padding: 11px; border: 2px solid #8e651c; background: #fff8c9; }
+    .product-line { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; border-bottom: 1px dotted #83601d; padding: 9px 0; }
+    .product-line small { display: block; opacity: .7; }
+    .product-button { background: #f4d679; border: 2px solid #765319; border-radius: 5px; padding: 8px 11px; cursor: pointer; font-weight: bold; color: var(--ink); }
+    .product-button:hover { background: #fff0a4; }
 
-    button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #1d4ed8;
-    }
-
-    button.secondary {
-      background: #64748b;
-    }
-
-    button.secondary:hover {
-      background: #475569;
-    }
-
-    button.danger {
-      background: #dc2626;
-    }
-
-    button.danger:hover {
-      background: #b91c1c;
-    }
-
-    button.small {
-      width: auto;
-      padding: 7px 10px;
-      margin: 2px;
-      font-size: 13px;
-    }
-
-    .product {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 0;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .product:last-child {
-      border-bottom: none;
-    }
-
-    .product-info {
-      flex: 1;
-    }
-
-    .product-actions {
-      min-width: 130px;
-      text-align: right;
-    }
-
-    .cart-row {
-      display: grid;
-      grid-template-columns: 1fr auto auto;
-      gap: 10px;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .cart-row:last-child {
-      border-bottom: none;
-    }
-
-    .quantity-controls {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .quantity-controls button {
-      width: 30px;
-      height: 30px;
-      padding: 0;
-      margin: 0;
-    }
-
-    .total {
-      font-size: 25px;
-      font-weight: bold;
-      margin-top: 20px;
-      text-align: right;
-    }
-
-    .message {
-      min-height: 20px;
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 6px;
-      background: #e0f2fe;
-      color: #075985;
-    }
-
-    .success {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .empty {
-      color: #64748b;
-    }
-
-    .receipt {
-      border: 1px dashed #94a3b8;
-      padding: 15px;
-      margin-top: 20px;
-      background: #fff;
-      font-family: monospace;
-    }
-
-    .receipt h3 {
-      text-align: center;
-      margin-top: 0;
-    }
-
-    .receipt-line {
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 4px 0;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    @media (max-width: 800px) {
-      main {
-        grid-template-columns: 1fr;
-      }
-
-      .cart-row {
-        grid-template-columns: 1fr;
-        gap: 5px;
-      }
-
-      .product {
-        align-items: flex-start;
-      }
-
-      .product-actions {
-        min-width: 100px;
-      }
-    }
-
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-
-      #receipt,
-      #receipt * {
-        visibility: visible;
-      }
-
-      #receipt {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 80mm;
-        border: none;
-      }
-    }
+    .receipt-zone { position: relative; overflow: hidden; background: #2c170e; border: 5px solid #21100a; min-height: 390px; padding: 22px; box-shadow: inset 0 0 25px #0e0603; }
+    .receipt-slot { height: 18px; background: #080504; border-radius: 20px; box-shadow: 0 2px 0 #d29b40; margin: -4px 8px 0; position: relative; z-index: 2; }
+    .receipt-paper { background: #fff9dc; width: min(100%, 340px); margin: -3px auto 0; padding: 22px 18px 28px; clip-path: polygon(0 0,100% 0,100% 97%,96% 100%,92% 97%,88% 100%,84% 97%,80% 100%,76% 97%,72% 100%,68% 97%,64% 100%,60% 97%,56% 100%,52% 97%,48% 100%,44% 97%,40% 100%,36% 97%,32% 100%,28% 97%,24% 100%,20% 97%,16% 100%,12% 97%,8% 100%,4% 97%,0 100%); transform: translateY(-125%); transition: transform 1s cubic-bezier(.2,.8,.2,1); color: #302318; font: 14px 'Courier New', monospace; box-shadow: 0 10px 18px #0008; }
+    .receipt-paper.show { transform: translateY(0); }
+    .receipt-paper h2 { text-align: center; margin: 0 0 7px; font-size: 22px; }
+    .receipt-paper .center { text-align: center; }
+    .receipt-item { display: flex; justify-content: space-between; gap: 8px; margin: 7px 0; }
+    .receipt-total { border-top: 2px dashed #40352a; margin-top: 12px; padding-top: 10px; font-weight: bold; font-size: 18px; display: flex; justify-content: space-between; }
+    .receipt-actions { display: flex; gap: 9px; margin-top: 15px; }
+    .receipt-actions button { flex: 1; }
+    .status { color: #f8d994; text-align: center; min-height: 24px; margin: 9px; }
+    .empty { opacity: .62; text-align: center; padding: 12px; }
+    .toast { position: fixed; right: 22px; bottom: 22px; background: #ffe28e; border: 3px solid #5b3215; padding: 13px 17px; transform: translateX(160%); transition: transform .35s; box-shadow: 4px 5px 0 #1c0d07; z-index: 10; }
+    .toast.show { transform: translateX(0); }
+    @media (max-width: 900px) { .top-panel, .workspace { grid-template-columns: 1fr; } }
+    @media print { body { background: white; } body * { visibility: hidden; } .receipt-paper, .receipt-paper * { visibility: visible; } .receipt-paper { position: absolute; left: 0; top: 0; transform: none !important; box-shadow: none; } }
   </style>
 </head>
-
 <body>
-  <header>
-    <h1>Lokalna kasa fiskalna</h1>
-    <div>Tryb lokalny — dane są zapisane tylko w tej przeglądarce</div>
-  </header>
+  <div class="app">
+    <div class="brand">
+      <div><h1>STARA KASA</h1><p>Sklepik osiedlowy • tryb lokalny</p></div>
+      <div class="badge">GOTÓWKA<br>1958</div>
+    </div>
 
-  <main>
-    <!-- Dodawanie produktu -->
-    <section>
-      <h2>Dodaj lub ustaw produkt</h2>
-
-      <input
-        id="productName"
-        type="text"
-        placeholder="Nazwa produktu na paragonie"
-      >
-
-      <input
-        id="productPrice"
-        type="number"
-        min="0"
-        step="0.01"
-        placeholder="Cena brutto"
-      >
-
-      <input
-        id="productBarcode"
-        type="text"
-        placeholder="Kod kreskowy — opcjonalnie"
-      >
-
-      <input
-        id="productVat"
-        type="number"
-        min="0"
-        value="23"
-        placeholder="VAT %"
-      >
-
-      <button id="saveProductButton">
-        Dodaj produkt
-      </button>
-
-      <button
-        id="cancelEditButton"
-        class="secondary hidden">
-        Anuluj edycję
-      </button>
-
-      <div id="productMessage" class="message"></div>
-    </section>
-
-    <!-- Produkty -->
-    <section>
-      <h2>Produkty</h2>
-
-      <input
-        id="searchInput"
-        type="text"
-        placeholder="Szukaj po nazwie lub kodzie..."
-      >
-
-      <div id="productsList">
-        <p class="empty">Nie dodano jeszcze produktów.</p>
+    <div class="register">
+      <div class="top-panel">
+        <div class="wood-panel">
+          <div class="lcd">
+            <div class="lcd-label">POZYCJA / SUMA</div>
+            <div class="lcd-name" id="lcdName">PARAGON GOTOWY</div>
+            <div class="lcd-total"><span id="totalDisplay">0.00</span> zł</div>
+          </div>
+          <div class="keypad">
+            <button class="key" data-key="7">7</button><button class="key" data-key="8">8</button><button class="key" data-key="9">9</button><button class="key red" id="clearBtn">C</button>
+            <button class="key" data-key="4">4</button><button class="key" data-key="5">5</button><button class="key" data-key="6">6</button><button class="key" id="backBtn">←</button>
+            <button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button><button class="key" data-key=".">.</button>
+            <button class="key wide" data-key="0">0</button><button class="key green wide" id="finishBtn">GOTOWE</button>
+          </div>
+          <div class="cash-row">
+            <select id="payment"><option>Gotówka</option><option>Karta</option><option>Przelew</option></select>
+            <input id="cashGiven" type="number" min="0" step="0.01" placeholder="Wpłata klienta">
+          </div>
+        </div>
+        <div class="receipt-zone">
+          <div class="receipt-slot"></div>
+          <div id="receipt" class="receipt-paper">
+            <h2>PARAGON</h2><div class="center">STARA KASA • SKLEPIK</div><div class="center" id="receiptDate"></div><hr>
+            <div id="receiptItems"><div class="empty">Paragon czeka na produkty</div></div>
+            <div class="receipt-total"><span>RAZEM</span><span id="receiptTotal">0.00 zł</span></div>
+            <p class="center" id="receiptPayment">Płatność: —</p><p class="center">Dziękujemy za zakupy!</p>
+          </div>
+          <div class="status" id="status">Wybierz produkt z żółtej listy</div>
+        </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Paragon -->
-    <section>
-      <h2>Aktualny paragon</h2>
-
-      <div id="cartList">
-        <p class="empty">Paragon jest pusty.</p>
-      </div>
-
-      <div class="total">
-        Razem:
-        <span id="totalValue">0.00</span> zł
-      </div>
-
-      <select id="paymentMethod">
-        <option value="Gotówka">Gotówka</option>
-        <option value="Karta">Karta</option>
-        <option value="Przelew">Przelew</option>
-      </select>
-
-      <button id="finishSaleButton">
-        Zakończ sprzedaż
-      </button>
-
-      <button
-        id="clearCartButton"
-        class="danger">
-        Wyczyść paragon
-      </button>
-
-      <div id="saleMessage" class="message"></div>
-    </section>
-
-    <!-- Ostatni paragon -->
-    <section>
-      <h2>Ostatni paragon</h2>
-
-      <div id="receipt" class="receipt hidden"></div>
-
-      <button
-        id="printReceiptButton"
-        class="secondary hidden">
-        Drukuj paragon
-      </button>
-    </section>
-  </main>
+    <div class="workspace">
+      <section class="card">
+        <span class="pin left"></span><span class="pin right"></span>
+        <div class="add-box"><input id="newName" placeholder="Nazwa produktu na paragonie"><input id="newPrice" type="number" min="0" step="0.01" placeholder="Cena zł"></div>
+        <button class="product-button" id="addProduct" style="width:100%;margin-bottom:10px">+ DODAJ PRODUKT DO LISTY</button>
+        <div id="productList"></div>
+      </section>
+      <section class="card" style="transform:rotate(.35deg)">
+        <span class="pin left"></span><span class="pin right"></span>
+        <div class="add-box" style="grid-template-columns:1fr"><input id="search" placeholder="Szukaj na liście produktów..."></div>
+        <p>Każdy przycisk na żółtej kartce dodaje produkt na paragon. Nazwę i cenę możesz zmienić przez przycisk <b>EDYTUJ</b>.</p>
+        <button class="product-button" id="clearCart" style="width:100%; margin-top:10px">WYCZYŚĆ PARAGON</button>
+        <button class="product-button" id="printBtn" style="width:100%; margin-top:8px">DRUKUJ PARAGON</button>
+        <div id="cartList" style="margin-top:14px"></div>
+      </section>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
 
   <script>
-    /*
-      WERSJA LOKALNA
-
-      Nie ma tu połączenia z Supabase ani żadnym backendem.
-      Produkty są przechowywane w localStorage przeglądarki.
-    */
-
-    const PRODUCTS_KEY = "lokalna_kasa_produkty";
-    const SALES_KEY = "lokalna_kasa_sprzedaz";
-
-    let products = loadProducts();
+    const KEY = 'stara_kasa_produkty_v1';
+    let products = JSON.parse(localStorage.getItem(KEY) || '[]');
     let cart = [];
-    let editingProductId = null;
-    let lastReceipt = null;
+    let keypadValue = '';
 
-    const productNameInput =
-      document.getElementById("productName");
+    const $ = id => document.getElementById(id);
+    const money = n => Number(n || 0).toFixed(2);
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    const id = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
+    const total = () => cart.reduce((sum, x) => sum + x.price * x.qty, 0);
 
-    const productPriceInput =
-      document.getElementById("productPrice");
-
-    const productBarcodeInput =
-      document.getElementById("productBarcode");
-
-    const productVatInput =
-      document.getElementById("productVat");
-
-    const saveProductButton =
-      document.getElementById("saveProductButton");
-
-    const cancelEditButton =
-      document.getElementById("cancelEditButton");
-
-    const productMessage =
-      document.getElementById("productMessage");
-
-    const searchInput =
-      document.getElementById("searchInput");
-
-    const productsList =
-      document.getElementById("productsList");
-
-    const cartList =
-      document.getElementById("cartList");
-
-    const totalValue =
-      document.getElementById("totalValue");
-
-    const paymentMethod =
-      document.getElementById("paymentMethod");
-
-    const finishSaleButton =
-      document.getElementById("finishSaleButton");
-
-    const clearCartButton =
-      document.getElementById("clearCartButton");
-
-    const saleMessage =
-      document.getElementById("saleMessage");
-
-    const receipt =
-      document.getElementById("receipt");
-
-    const printReceiptButton =
-      document.getElementById("printReceiptButton");
-
-    function createId() {
-      return Date.now().toString() +
-        Math.random().toString(16).slice(2);
-    }
-
-    function loadProducts() {
-      try {
-        return JSON.parse(
-          localStorage.getItem(PRODUCTS_KEY)
-        ) || [];
-      } catch {
-        return [];
-      }
-    }
-
-    function saveProducts() {
-      localStorage.setItem(
-        PRODUCTS_KEY,
-        JSON.stringify(products)
-      );
-    }
-
-    function showMessage(element, text, type = "") {
-      element.textContent = text;
-      element.className = "message " + type;
-    }
-
-    function clearMessage(element) {
-      element.textContent = "";
-      element.className = "message";
-    }
-
-    function money(value) {
-      return Number(value || 0).toFixed(2);
-    }
-
-    function escapeHtml(value) {
-      return String(value)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-    }
+    function toast(text) { $('toast').textContent = text; $('toast').classList.add('show'); setTimeout(() => $('toast').classList.remove('show'), 2200); }
+    function save() { localStorage.setItem(KEY, JSON.stringify(products)); }
 
     function renderProducts() {
-      const search = searchInput.value
-        .trim()
-        .toLowerCase();
-
-      const filteredProducts = products.filter(product => {
-        const name = product.name.toLowerCase();
-        const barcode = product.barcode.toLowerCase();
-
-        return (
-          name.includes(search) ||
-          barcode.includes(search)
-        );
+      const q = $('search').value.toLowerCase();
+      const list = $('productList'); list.innerHTML = '';
+      const filtered = products.filter(p => p.name.toLowerCase().includes(q));
+      if (!filtered.length) { list.innerHTML = '<div class="empty">Lista jest pusta. Dodaj pierwszy produkt powyżej.</div>'; return; }
+      filtered.forEach(p => {
+        const row = document.createElement('div'); row.className = 'product-line';
+        row.innerHTML = `<div><b>${esc(p.name)}</b><small>${money(p.price)} zł</small></div><div><button class="product-button add">DODAJ</button><button class="product-button edit">EDYTUJ</button></div>`;
+        row.querySelector('.add').onclick = () => addToCart(p);
+        row.querySelector('.edit').onclick = () => editProduct(p);
+        list.appendChild(row);
       });
-
-      productsList.innerHTML = "";
-
-      if (!filteredProducts.length) {
-        productsList.innerHTML =
-          '<p class="empty">Brak produktów.</p>';
-        return;
-      }
-
-      filteredProducts.forEach(product => {
-        const row = document.createElement("div");
-        row.className = "product";
-
-        row.innerHTML = `
-          <div class="product-info">
-            <strong>${escapeHtml(product.name)}</strong>  
-
-            <span>
-              Cena: ${money(product.price)} zł
-            </span>  
-
-            <small>
-              Kod: ${escapeHtml(product.barcode || "brak")}
-              | VAT: ${product.vat}% 
-            </small>
-          </div>
-
-          <div class="product-actions">
-            <button
-              class="small"
-              data-action="add">
-              Dodaj
-            </button>
-
-            <button
-              class="small secondary"
-              data-action="edit">
-              Edytuj
-            </button>
-
-            <button
-              class="small danger"
-              data-action="delete">
-              Usuń
-            </button>
-          </div>
-        `;
-
-        row.querySelector('[data-action="add"]')
-          .addEventListener("click", () => {
-            addToCart(product.id);
-          });
-
-        row.querySelector('[data-action="edit"]')
-          .addEventListener("click", () => {
-            startEditProduct(product.id);
-          });
-
-        row.querySelector('[data-action="delete"]')
-          .addEventListener("click", () => {
-            deleteProduct(product.id);
-          });
-
-        productsList.appendChild(row);
-      });
-    }
-
-    function saveProduct() {
-      clearMessage(productMessage);
-
-      const name = productNameInput.value.trim();
-      const price = Number(productPriceInput.value);
-      const barcode = productBarcodeInput.value.trim();
-      const vat = Number(productVatInput.value);
-
-      if (!name) {
-        showMessage(
-          productMessage,
-          "Wpisz nazwę produktu.",
-          "error"
-        );
-        return;
-      }
-
-      if (!Number.isFinite(price) || price < 0) {
-        showMessage(
-          productMessage,
-          "Wpisz prawidłową cenę.",
-          "error"
-        );
-        return;
-      }
-
-      if (!Number.isFinite(vat) || vat < 0) {
-        showMessage(
-          productMessage,
-          "Wpisz prawidłową stawkę VAT.",
-          "error"
-        );
-        return;
-      }
-
-      if (editingProductId) {
-        const product = products.find(
-          item => item.id === editingProductId
-        );
-
-        if (product) {
-          product.name = name;
-          product.price = price;
-          product.barcode = barcode;
-          product.vat = vat;
-        }
-
-        showMessage(
-          productMessage,
-          "Produkt został zaktualizowany.",
-          "success"
-        );
-      } else {
-        products.push({
-          id: createId(),
-          name,
-          price,
-          barcode,
-          vat
-        });
-
-        showMessage(
-          productMessage,
-          "Produkt został dodany.",
-          "success"
-        );
-      }
-
-      saveProducts();
-      clearProductForm();
-      renderProducts();
-    }
-
-    function startEditProduct(productId) {
-      const product = products.find(
-        item => item.id === productId
-      );
-
-      if (!product) {
-        return;
-      }
-
-      editingProductId = productId;
-
-      productNameInput.value = product.name;
-      productPriceInput.value = product.price;
-      productBarcodeInput.value = product.barcode;
-      productVatInput.value = product.vat;
-
-      saveProductButton.textContent =
-        "Zapisz zmiany produktu";
-
-      cancelEditButton.classList.remove("hidden");
-
-      productNameInput.focus();
-
-      showMessage(
-        productMessage,
-        "Edytujesz produkt. Zmień nazwę lub cenę i zapisz.",
-        ""
-      );
-    }
-
-    function clearProductForm() {
-      editingProductId = null;
-
-      productNameInput.value = "";
-      productPriceInput.value = "";
-      productBarcodeInput.value = "";
-      productVatInput.value = "23";
-
-      saveProductButton.textContent =
-        "Dodaj produkt";
-
-      cancelEditButton.classList.add("hidden");
-    }
-
-    function deleteProduct(productId) {
-      const product = products.find(
-        item => item.id === productId
-      );
-
-      if (!product) {
-        return;
-      }
-
-      const confirmed = confirm(
-        `Usunąć produkt "${product.name}"?`
-      );
-
-      if (!confirmed) {
-        return;
-      }
-
-      products = products.filter(
-        item => item.id !== productId
-      );
-
-      saveProducts();
-      renderProducts();
-
-      showMessage(
-        productMessage,
-        "Produkt został usunięty.",
-        "success"
-      );
-    }
-
-    function addToCart(productId) {
-      const product = products.find(
-        item => item.id === productId
-      );
-
-      if (!product) {
-        return;
-      }
-
-      /*
-        Nazwa i cena są kopiowane do koszyka.
-        Dzięki temu paragon zachowuje cenę i nazwę
-        ustawione w chwili dodania produktu.
-      */
-
-      const existingItem = cart.find(
-        item => item.productId === productId
-      );
-
-      if (existingItem) {
-        existingItem.quantity += 1;
-      } else {
-        cart.push({
-          productId: product.id,
-          name: product.name,
-          price: Number(product.price),
-          vat: Number(product.vat),
-          quantity: 1
-        });
-      }
-
-      renderCart();
-
-      showMessage(
-        saleMessage,
-        `${product.name} dodano na paragon.`,
-        "success"
-      );
-    }
-
-    function changeQuantity(productId, change) {
-      const item = cart.find(
-        cartItem => cartItem.productId === productId
-      );
-
-      if (!item) {
-        return;
-      }
-
-      item.quantity += change;
-
-      if (item.quantity <= 0) {
-        cart = cart.filter(
-          cartItem => cartItem.productId !== productId
-        );
-      }
-
-      renderCart();
-    }
-
-    function removeFromCart(productId) {
-      cart = cart.filter(
-        item => item.productId !== productId
-      );
-
-      renderCart();
-    }
-
-    function calculateTotal() {
-      return cart.reduce((total, item) => {
-        return total + item.price * item.quantity;
-      }, 0);
     }
 
     function renderCart() {
-      cartList.innerHTML = "";
-
-      if (!cart.length) {
-        cartList.innerHTML =
-          '<p class="empty">Paragon jest pusty.</p>';
-
-        totalValue.textContent = "0.00";
-        return;
-      }
-
-      cart.forEach(item => {
-        const lineTotal =
-          item.price * item.quantity;
-
-        const row = document.createElement("div");
-        row.className = "cart-row";
-
-        row.innerHTML = `
-          <div>
-            <strong>${escapeHtml(item.name)}</strong>  
-
-            <small>
-              ${money(item.price)} zł/szt.
-              | Razem: ${money(lineTotal)} zł
-            </small>
-          </div>
-
-          <div class="quantity-controls">
-            <button data-action="minus">−</button>
-            <strong>${item.quantity}</strong>
-            <button data-action="plus">+</button>
-          </div>
-
-          <button
-            class="small danger"
-            data-action="remove">
-            Usuń
-          </button>
-        `;
-
-        row.querySelector('[data-action="minus"]')
-          .addEventListener("click", () => {
-            changeQuantity(item.productId, -1);
-          });
-
-        row.querySelector('[data-action="plus"]')
-          .addEventListener("click", () => {
-            changeQuantity(item.productId, 1);
-          });
-
-        row.querySelector('[data-action="remove"]')
-          .addEventListener("click", () => {
-            removeFromCart(item.productId);
-          });
-
-        cartList.appendChild(row);
-      });
-
-      totalValue.textContent =
-        money(calculateTotal());
-    }
-
-    function finishSale() {
-      clearMessage(saleMessage);
-
-      if (!cart.length) {
-        showMessage(
-          saleMessage,
-          "Paragon jest pusty.",
-          "error"
-        );
-        return;
-      }
-
-      const sale = {
-        id: createId(),
-        number: "PAR-" + Date.now(),
-        date: new Date().toLocaleString("pl-PL"),
-        payment: paymentMethod.value,
-        items: cart.map(item => ({
-          name: item.name,
-          price: item.price,
-          vat: item.vat,
-          quantity: item.quantity
-        })),
-        total: calculateTotal()
-      };
-
-      const previousSales = JSON.parse(
-        localStorage.getItem(SALES_KEY) || "[]"
-      );
-
-      previousSales.push(sale);
-
-      localStorage.setItem(
-        SALES_KEY,
-        JSON.stringify(previousSales)
-      );
-
-      lastReceipt = sale;
+      $('cartList').innerHTML = cart.length ? cart.map(x => `<div class="product-line"><div><b>${esc(x.name)}</b><small>${x.qty} × ${money(x.price)} zł = ${money(x.qty*x.price)} zł</small></div><div><button class="product-button" onclick="changeQty('${x.productId}',1)">+</button><button class="product-button" onclick="changeQty('${x.productId}',-1)">−</button></div></div>`).join('') : '<div class="empty">Koszyk pusty</div>';
+      $('totalDisplay').textContent = money(total()); $('receiptTotal').textContent = money(total()) + ' zł';
+      $('lcdName').textContent = cart.length ? cart[cart.length - 1].name.toUpperCase() : 'PARAGON GOTOWY';
       renderReceipt();
-
-      cart = [];
-      renderCart();
-
-      showMessage(
-        saleMessage,
-        `Sprzedaż zapisana lokalnie. Numer: ${sale.number}`,
-        "success"
-      );
     }
 
     function renderReceipt() {
-      if (!lastReceipt) {
-        receipt.classList.add("hidden");
-        printReceiptButton.classList.add("hidden");
-        return;
-      }
-
-      receipt.classList.remove("hidden");
-      printReceiptButton.classList.remove("hidden");
-
-      let itemsHtml = "";
-
-      lastReceipt.items.forEach(item => {
-        const lineTotal =
-          item.price * item.quantity;
-
-        itemsHtml += `
-          <div class="receipt-line">
-            <span>
-              ${escapeHtml(item.name)}
-              x${item.quantity}
-            </span>
-            <span>${money(lineTotal)} zł</span>
-          </div>
-        `;
-      });
-
-      receipt.innerHTML = `
-        <h3>PARAGON</h3>
-
-        <div>Numer: ${lastReceipt.number}</div>
-        <div>Data: ${lastReceipt.date}</div>
-        <div>Płatność: ${escapeHtml(lastReceipt.payment)}</div>
-
-        <hr>
-
-        ${itemsHtml}
-
-        <hr>
-
-        <div class="receipt-line">
-          <strong>RAZEM:</strong>
-          <strong>${money(lastReceipt.total)} zł</strong>
-        </div>
-
-        <p style="text-align:center">
-          Dziękujemy za zakupy
-        </p>
-      `;
+      $('receiptItems').innerHTML = cart.length ? cart.map(x => `<div class="receipt-item"><span>${esc(x.name)} x${x.qty}</span><span>${money(x.qty*x.price)}</span></div>`).join('') : '<div class="empty">Paragon czeka na produkty</div>';
+      $('receiptPayment').textContent = 'Płatność: ' + $('payment').value;
+      $('receiptDate').textContent = new Date().toLocaleString('pl-PL');
     }
 
-    saveProductButton.addEventListener(
-      "click",
-      saveProduct
-    );
+    function addToCart(p) { const x = cart.find(i => i.productId === p.id); if (x) x.qty++; else cart.push({productId:p.id, name:p.name, price:Number(p.price), qty:1}); renderCart(); toast('Dodano: ' + p.name); }
+    function changeQty(productId, amount) { const x = cart.find(i => i.productId === productId); if (!x) return; x.qty += amount; if (x.qty <= 0) cart = cart.filter(i => i.productId !== productId); renderCart(); }
 
-    cancelEditButton.addEventListener(
-      "click",
-      () => {
-        clearProductForm();
-        clearMessage(productMessage);
-      }
-    );
+    function editProduct(p) {
+      const name = prompt('Nazwa produktu na paragonie:', p.name); if (name === null || !name.trim()) return;
+      const price = prompt('Cena produktu:', p.price); if (price === null || isNaN(Number(price)) || Number(price) < 0) return;
+      p.name = name.trim(); p.price = Number(price); save(); renderProducts(); toast('Zmieniono produkt');
+    }
 
-    searchInput.addEventListener(
-      "input",
-      renderProducts
-    );
+    $('addProduct').onclick = () => { const name = $('newName').value.trim(); const price = Number($('newPrice').value); if (!name || !Number.isFinite(price) || price < 0) { toast('Wpisz nazwę i poprawną cenę'); return; } products.push({id:id(),name,price}); save(); $('newName').value=''; $('newPrice').value=''; renderProducts(); toast('Produkt dodany do żółtej listy'); };
+    $('search').oninput = renderProducts;
+    $('payment').onchange = renderReceipt;
+    $('clearCart').onclick = () => { cart=[]; renderCart(); toast('Paragon wyczyszczony'); };
+    $('printBtn').onclick = () => window.print();
+    document.querySelectorAll('[data-key]').forEach(b => b.onclick = () => { keypadValue += b.dataset.key; $('cashGiven').value = keypadValue; });
+    $('clearBtn').onclick = () => { keypadValue=''; $('cashGiven').value=''; };
+    $('backBtn').onclick = () => { keypadValue=keypadValue.slice(0,-1); $('cashGiven').value=keypadValue; };
+    $('finishBtn').onclick = () => { if (!cart.length) { toast('Najpierw dodaj produkt'); return; } $('receipt').classList.remove('show'); setTimeout(() => $('receipt').classList.add('show'), 80); $('status').textContent='Paragon wysunięty — sprzedaż zakończona'; toast('Gotowe! Paragon wysunięty'); };
 
-    finishSaleButton.addEventListener(
-      "click",
-      finishSale
-    );
-
-    clearCartButton.addEventListener(
-      "click",
-      () => {
-        cart = [];
-        renderCart();
-
-        showMessage(
-          saleMessage,
-          "Paragon został wyczyszczony.",
-          "success"
-        );
-      }
-    );
-
-    printReceiptButton.addEventListener(
-      "click",
-      () => {
-        window.print();
-      }
-    );
-
-    renderProducts();
-    renderCart();
-    renderReceipt();
+    renderProducts(); renderCart(); setTimeout(() => $('receipt').classList.add('show'), 450);
   </script>
 </body>
 </html>
